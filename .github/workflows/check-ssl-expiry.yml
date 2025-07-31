@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
   schedule:
-    - cron: 0 1 * * 1,2,3,4,5
+    - cron: 0 1 * * 1,2,3,4,5   # Runs at 01:00 UTC on weekdays
 
 jobs:
   check_ssl_expiry:
@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Check SSL Expiry
         shell: pwsh
         run: |
@@ -38,7 +38,7 @@ jobs:
           Invoke-Pester -Script ./tests/Run-Tests.ps1 `
           -OutputFile ./TestResults.xml `
           -OutputFormat JUnitXml
-      
+
   deploy:
     if: ${{ always() }}
     name: Deploy to GitHub Pages
@@ -63,13 +63,14 @@ jobs:
         with:
           name: SSL Expiry Custom HTML Report
           path: .
+
       - name: Setup Pages
-        uses: actions/configure-pages@v2
+        uses: actions/configure-pages@v3
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v2
         with:
           path: '.'
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
