@@ -1,5 +1,5 @@
 {
-    "Medium": 2,
-    "Low": 3,
-    "High": 1
+  "Low": 90,
+  "Medium": 60,
+  "High": 30
 }
