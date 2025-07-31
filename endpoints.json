@@ -32,5 +32,10 @@
         "service": "external",
         "hostname": "stackoverflow.com",
         "environment": "prod"
+    },
+    {
+    "name": "External",
+    "url": "https://www.netflix.com",
+    "environment": "prod"
     }
 ]
