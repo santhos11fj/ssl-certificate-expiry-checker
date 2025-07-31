@@ -1,42 +1,10 @@
 [
-   {
-      "name":"service_A",
-      "url":"https://azure.microsoft.com",
-      "environment":"prod"
-   },
-   {
-      "name":"service_B",
-      "url":"https://httpbin.org",
-      "environment":"prod"
-   },
-   {
-      "name":"service_C",
-      "url":"https://github.com",
-      "environment":"prod"
-   },
-   {
-      "name":"external",
-      "url":"https://www.google.com",
-      "environment":"prod"
-   },
-   {
-      "name":"external",
-      "url":"https://www.facebook.com",
-      "environment":"prod"
-   },
-   {
-      "name":"external",
-      "url":"https://www.microsoft.com",
-      "environment":"prod"
-   },
-   {
-      "name":"external",
-      "url":"https://stackoverflow.com",
-      "environment":"prod"
-   },
-   {
-      "name":"external",
-      "url":"https://www.netflix.com",
-      "environment":"prod"
-   }
+  { "name": "service_A", "url": "https://azure.microsoft.com", "environment": "prod" },
+  { "name": "service_B", "url": "https://httpbin.org", "environment": "prod" },
+  { "name": "service_C", "url": "https://github.com", "environment": "prod" },
+  { "name": "external", "url": "https://www.google.com", "environment": "prod" },
+  { "name": "external", "url": "https://www.facebook.com", "environment": "prod" },
+  { "name": "external", "url": "https://www.microsoft.com", "environment": "prod" },
+  { "name": "external", "url": "https://stackoverflow.com", "environment": "prod" },
+  { "name": "external", "url": "https://www.netflix.com", "environment": "prod" }
 ]
