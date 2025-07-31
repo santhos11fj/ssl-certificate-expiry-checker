@@ -1,38 +1,50 @@
+# Load the function to retrieve remote SSL certificates
 . $PSScriptRoot/Get-RemoteCertificate.ps1
 
-$upperPath = ($PSScriptRoot | split-path)
+# Get the parent directory path
+$upperPath = ($PSScriptRoot | Split-Path)
 
+# Load endpoints and alert thresholds
 $endpoints = Get-Content "$upperPath/endpoints.json" | ConvertFrom-Json
-
 $alertThresholds = Get-Content "$upperPath/alertThresholds.json" | ConvertFrom-Json
 
+# Retrieve SSL certificate details for each endpoint
 $sslCertificateDetails = $endpoints | ForEach-Object {
+    # Get the SSL certificate for the current endpoint
     $cert = Get-RemoteCertificate -ComputerName $_.hostname -Insecure
-    Add-Member -InputObject $_ -NotePropertyName "Issuer" -NotePropertyValue $cert.Issuer
-    Add-Member -InputObject $_ -NotePropertyName "DaysToExpire" -NotePropertyValue (($cert.NotAfter - (get-date)).Days)
 
-    # Calculate Severity
-    if ($_.DaysToExpire) {
-        if ($_.DaysToExpire -lt $alertThresholds.Low) {
-            $severity = 'Low'
-        }
-        if ($_.DaysToExpire -lt $alertThresholds.Medium) {
-            $severity = 'Medium'
-        }
-        if ($_.DaysToExpire -lt $alertThresholds.High) {
+    # Add issuer information
+    Add-Member -InputObject $_ -NotePropertyName "Issuer" -NotePropertyValue $cert.Issuer
+
+    # Calculate days remaining until expiry
+    $daysRemaining = ($cert.NotAfter - (Get-Date)).Days
+    Add-Member -InputObject $_ -NotePropertyName "DaysToExpire" -NotePropertyValue $daysRemaining
+
+    # ✅ Correct Severity Calculation
+    if ($daysRemaining -gt 0) {
+        if ($daysRemaining -le $alertThresholds.High) {
             $severity = 'High'
         }
-        if ($_.DaysToExpire -ge $alertThresholds.Low) {
-            $severity = 'None'
+        elseif ($daysRemaining -le $alertThresholds.Medium) {
+            $severity = 'Medium'
+        }
+        elseif ($daysRemaining -le $alertThresholds.Low) {
+            $severity = 'Low'
+        }
+        else {
+            $severity = 'Safe'
         }
     }
     else {
-        $severity = 'Error'
+        $severity = 'Error'   # Certificate is already expired or invalid
     }
 
+    # Add severity field to the object
     Add-Member -InputObject $_ -NotePropertyName "Severity" -NotePropertyValue $severity
+
+    # Return the updated object
     $_
 }
 
-$sslCertificateDetails | ConvertTo-Json | out-file "$upperPath/sslCertificateDetails.json" -Force
-
+# Save results as JSON for downstream usage (HTML report, notifications, etc.)
+$sslCertificateDetails | ConvertTo-Json | Out-File "$upperPath/sslCertificateDetails.json" -Force
