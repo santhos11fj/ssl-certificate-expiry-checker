@@ -1,13 +1,68 @@
 [
-  { "service": "service_A", "hostname": "azure.microsoft.com", "environment": "prod" },
-  { "service": "service_B", "hostname": "httpbin.org", "environment": "prod" },
-  { "service": "service_C", "hostname": "github.com", "environment": "prod" },
-  { "service": "external", "hostname": "www.google.com", "environment": "prod" },
-  { "service": "external", "hostname": "www.facebook.com", "environment": "prod" },
-  { "service": "external", "hostname": "www.microsoft.com", "environment": "prod" },
-  { "service": "external", "hostname": "stackoverflow.com", "environment": "prod" },
-  { "service": "external", "hostname": "www.nhs.uk", "environment": "prod" },
-  { "service": "external", "hostname": "www.singaporeair.com", "environment": "prod" },
-  { "service": "external", "hostname": "le.ac.uk", "environment": "prod" },
-  { "service": "external", "hostname": "mail.google.com", "environment": "prod" }
+  {
+    "service": "service_A",
+    "hostname": "azure.microsoft.com",
+    "environment": "prod",
+    "owner": "azure-team@example.com"
+  },
+  {
+    "service": "service_B",
+    "hostname": "httpbin.org",
+    "environment": "prod",
+    "owner": "api-team@example.com"
+  },
+  {
+    "service": "service_C",
+    "hostname": "github.com",
+    "environment": "prod",
+    "owner": "dev-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.google.com",
+    "environment": "prod",
+    "owner": "devops-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.facebook.com",
+    "environment": "prod",
+    "owner": "security-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.microsoft.com",
+    "environment": "prod",
+    "owner": "infra-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "stackoverflow.com",
+    "environment": "prod",
+    "owner": "support-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.nhs.uk",
+    "environment": "prod",
+    "owner": "healthcare-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.singaporeair.com",
+    "environment": "prod",
+    "owner": "travel-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "le.ac.uk",
+    "environment": "prod",
+    "owner": "university-it@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "mail.google.com",
+    "environment": "prod",
+    "owner": "communications-team@example.com"
+  }
 ]
