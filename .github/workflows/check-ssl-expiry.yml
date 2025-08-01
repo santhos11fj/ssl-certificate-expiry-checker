@@ -39,6 +39,22 @@ jobs:
           -OutputFile ./TestResults.xml `
           -OutputFormat JUnitXml
 
+      # ✅ Slack Alert Integration
+      - name: Send Slack Alert if High/Error SSL Certificates Found
+        if: always()
+        shell: pwsh
+        run: |
+          $data = Get-Content sslCertificateDetails.json | ConvertFrom-Json
+          $alerts = $data | Where-Object { $_.Severity -in @("High","Error") }
+          if ($alerts.Count -gt 0) {
+              Write-Host "⚠️ High/Expired certificates found. Sending Slack Alert..."
+              .\Send-SlackAlert.ps1 $alerts
+          } else {
+              Write-Host "✅ No critical SSL alerts detected."
+          }
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
   deploy:
     if: ${{ always() }}
     name: Deploy to GitHub Pages
@@ -65,7 +81,7 @@ jobs:
           path: .
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4   # ✅ No unsupported parameter here
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
