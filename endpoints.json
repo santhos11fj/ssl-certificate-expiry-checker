@@ -7,5 +7,6 @@
   { "service": "external", "hostname": "www.microsoft.com", "environment": "prod" },
   { "service": "external", "hostname": "stackoverflow.com", "environment": "prod" },
   { "service": "external", "hostname": "www.nhs.uk", "environment": "prod" },
-  { "service": "external", "hostname": "www.singaporeair.com", "environment": "prod" }
+  { "service": "external", "hostname": "www.singaporeair.com", "environment": "prod" },
+  { "service": "external", "hostname": "le.ac.uk", "environment": "prod" }
 ]
