@@ -51,7 +51,7 @@ jobs:
               $endpoints = Get-Content endpoints.json | ConvertFrom-Json
               foreach ($alert in $alerts) {
                   $endpoint = $endpoints | Where-Object { $_.hostname -eq $alert.hostname }
-                  $alert | Add-Member -NotePropertyName owner -NotePropertyValue ($endpoint.owner)
+                  $alert | Add-Member -NotePropertyName owner -NotePropertyValue ($endpoint.owner) -Force
               }
               .\Send-SlackAlert.ps1 $alerts
           } else {
