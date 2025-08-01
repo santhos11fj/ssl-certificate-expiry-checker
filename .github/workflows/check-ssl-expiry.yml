@@ -39,7 +39,7 @@ jobs:
             -OutputFile ./TestResults.xml `
             -OutputFormat JUnitXml
 
-      # ✅ Slack Alert Integration with Owner field (with -Force)
+      # ✅ Slack Alert Integration (with -Force to overwrite owner)
       - name: Send Slack Alert if High/Error SSL Certificates Found
         if: always()
         shell: pwsh
@@ -60,7 +60,7 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
-      # ✅ Incident Management - Auto GitHub Issue Creation (Clean Markdown Body)
+      # ✅ Incident Management - Auto GitHub Issue Creation (Clean Markdown Rendering)
       - name: Create GitHub Issue for High/Error SSL Certificates
         if: always()
         uses: actions/github-script@v7
