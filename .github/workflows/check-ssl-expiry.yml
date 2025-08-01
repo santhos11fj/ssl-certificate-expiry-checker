@@ -2,12 +2,12 @@ name: check-ssl-expiry
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
   schedule:
-    - cron: 0 1 * * 1,2,3,4,5   # Runs at 01:00 UTC on weekdays
+    - cron: '0 1 * * 1,2,3,4,5'  # Runs at 01:00 UTC on weekdays
 
 jobs:
   check_ssl_expiry:
@@ -36,10 +36,10 @@ jobs:
           Install-Module -Name Pester -Force -SkipPublisherCheck
           Import-Module Pester
           Invoke-Pester -Script ./tests/Run-Tests.ps1 `
-          -OutputFile ./TestResults.xml `
-          -OutputFormat JUnitXml
+            -OutputFile ./TestResults.xml `
+            -OutputFormat JUnitXml
 
-      # ✅ Slack Alert Integration
+      # ✅ Slack Alert Integration with Owner field
       - name: Send Slack Alert if High/Error SSL Certificates Found
         if: always()
         shell: pwsh
@@ -48,6 +48,12 @@ jobs:
           $alerts = $data | Where-Object { $_.Severity -in @("High","Error") }
           if ($alerts.Count -gt 0) {
               Write-Host "⚠️ High/Expired certificates found. Sending Slack Alert..."
+              # Include owner details from endpoints.json
+              $endpoints = Get-Content endpoints.json | ConvertFrom-Json
+              foreach ($alert in $alerts) {
+                  $endpoint = $endpoints | Where-Object { $_.hostname -eq $alert.hostname }
+                  $alert | Add-Member -NotePropertyName owner -NotePropertyValue ($endpoint.owner)
+              }
               .\Send-SlackAlert.ps1 $alerts
           } else {
               Write-Host "✅ No critical SSL alerts detected."
@@ -55,39 +61,5 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
-  deploy:
-    if: ${{ always() }}
-    name: Deploy to GitHub Pages
-    needs: check_ssl_expiry
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-
-    concurrency:
-      group: "pages"
-      cancel-in-progress: true
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: SSL Expiry Custom HTML Report
-          path: .
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # ✅ Incident Management - Auto GitHub Issue Creation
+      - name: Create GitHub Issue for High/Error SSL
