@@ -1,14 +1,8 @@
 [
   {
-    "hostname": "www.facebook.com",
+    "hostname": "expired.test.com",
     "Severity": "High",
-    "DaysToExpire": 2,
-    "environment": "prod"
-  },
-  {
-    "hostname": "www.google.com",
-    "Severity": "Error",
-    "DaysToExpire": 0,
+    "DaysToExpire": 1,
     "environment": "prod"
   }
 ]
