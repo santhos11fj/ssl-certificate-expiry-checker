@@ -10,17 +10,24 @@ $alertThresholds = Get-Content "$upperPath/alertThresholds.json" | ConvertFrom-J
 
 # Retrieve SSL certificate details for each endpoint
 $sslCertificateDetails = $endpoints | ForEach-Object {
-    # Get the SSL certificate for the current endpoint
-    $cert = Get-RemoteCertificate -ComputerName $_.hostname -Insecure
+    Write-Host "🔍 Checking SSL for $($_.hostname)..."
+
+    try {
+        # Attempt to retrieve SSL certificate
+        $cert = Get-RemoteCertificate -ComputerName $_.hostname -Insecure
+    } catch {
+        Write-Host "❌ Failed to retrieve SSL certificate for $($_.hostname): $($_.Exception.Message)"
+        throw  # ❌ In production, stop execution if SSL check fails
+    }
 
     # Add issuer information
-    Add-Member -InputObject $_ -NotePropertyName "Issuer" -NotePropertyValue $cert.Issuer
+    Add-Member -InputObject $_ -NotePropertyName "Issuer" -NotePropertyValue $cert.Issuer -Force
 
     # Calculate days remaining until expiry
     $daysRemaining = ($cert.NotAfter - (Get-Date)).Days
-    Add-Member -InputObject $_ -NotePropertyName "DaysToExpire" -NotePropertyValue $daysRemaining
+    Add-Member -InputObject $_ -NotePropertyName "DaysToExpire" -NotePropertyValue $daysRemaining -Force
 
-    # ✅ Correct Severity Calculation
+    # ✅ Determine severity
     if ($daysRemaining -gt 0) {
         if ($daysRemaining -le $alertThresholds.High) {
             $severity = 'High'
@@ -36,15 +43,16 @@ $sslCertificateDetails = $endpoints | ForEach-Object {
         }
     }
     else {
-        $severity = 'Error'   # Certificate is already expired or invalid
+        $severity = 'Error'   # Certificate is expired or invalid
     }
 
-    # Add severity field to the object
-    Add-Member -InputObject $_ -NotePropertyName "Severity" -NotePropertyValue $severity
+    # Add severity field
+    Add-Member -InputObject $_ -NotePropertyName "Severity" -NotePropertyValue $severity -Force
 
-    # Return the updated object
+    # Return updated object
     $_
 }
 
-# Save results as JSON for downstream usage (HTML report, notifications, etc.)
+# ✅ Save results to JSON
 $sslCertificateDetails | ConvertTo-Json | Out-File "$upperPath/sslCertificateDetails.json" -Force
+Write-Host "✅ SSL certificate scan completed. Results saved to $upperPath/sslCertificateDetails.json"
