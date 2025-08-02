@@ -1,74 +1,155 @@
-# ✅ Incident Management - Auto GitHub Issue Creation
-- name: Create GitHub Issue for High/Error SSL Certificates
-  if: always()
-  uses: actions/github-script@v7
-  env:
-    TEST_MODE: ${{ env.TEST_MODE }}
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    script: |
-      const fs = require('fs');
-      const data = JSON.parse(fs.readFileSync('sslCertificateDetails.json'));
-      const endpoints = JSON.parse(fs.readFileSync('endpoints.json'));
+name: check-ssl-expiry
 
-      const TEST_MODE = process.env.TEST_MODE === "true";
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * 1,2,3,4,5'
 
-      // ✅ Get open issues only for production duplicate check
-      let existingTitles = [];
-      if (!TEST_MODE) {
-        const issues = await github.rest.issues.listForRepo({
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          state: "open"
-        });
-        existingTitles = issues.data.map(issue => issue.title);
-      }
+env:
+  TEST_MODE: "false"   # ✅ Set to "true" to force test alerts, "false" for production
 
-      for (const risk of data.filter(d => ["High","Error"].includes(d.Severity))) {
-        const endpoint = endpoints.find(e => e.hostname === risk.hostname);
-        const issueTitle = `🚨 SSL Alert: ${risk.hostname} (${risk.Severity} severity)`;
+jobs:
+  check_ssl_expiry:
+    name: 'Check SSL Expiry'
+    runs-on: ubuntu-latest
 
-        if (TEST_MODE) {
-          // ✅ Always create a unique issue in Test Mode
-          await github.rest.issues.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: `${issueTitle} [Test Run ${Date.now()}]`,
-            body: `
-### 🔥 Test Mode SSL Certificate Alert 🚨
+    steps:
+      - uses: actions/checkout@v4
 
-- **Hostname:** ${risk.hostname}  
-- **Severity:** ${risk.Severity}  
-- **Days Left:** ${risk.DaysToExpire}  
-- **Environment:** ${risk.environment}  
-- **Owner:** ${endpoint?.owner || 'Not Assigned'}  
+      - name: Check SSL Expiry
+        if: env.TEST_MODE == 'false'
+        shell: pwsh
+        run: |
+          ./check-ssl-expiry.ps1
 
-*(This issue was auto-generated during **TEST MODE**)*
-            `,
-            labels: ["SSL Certificate", "TestMode", risk.Severity],
-          });
-        } else {
-          // ✅ Production Mode → Prevent duplicates
-          if (!existingTitles.includes(issueTitle)) {
-            await github.rest.issues.create({
+      # ✅ Test Mode Injection Step (Only Runs if TEST_MODE is true)
+      - name: Inject Dummy SSL Data (Test Mode)
+        if: env.TEST_MODE == 'true'
+        run: |
+          echo '[{"hostname":"expired.test.com","Severity":"High","DaysToExpire":1,"environment":"prod"}]' > sslCertificateDetails.json
+        shell: bash
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SSL Expiry Custom HTML Report
+          path: ./_site
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Run Pester Tests
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -Force -SkipPublisherCheck
+          Import-Module Pester
+          Invoke-Pester -Script ./tests/Run-Tests.ps1 `
+            -OutputFile ./TestResults.xml `
+            -OutputFormat JUnitXml
+
+      # ✅ Slack Alert Integration
+      - name: Send Slack Alert if High/Error SSL Certificates Found
+        if: always()
+        shell: pwsh
+        run: |
+          $data = Get-Content sslCertificateDetails.json | ConvertFrom-Json
+          $alerts = $data | Where-Object { $_.Severity -in @("High","Error") }
+          if ($alerts.Count -gt 0) {
+              Write-Host "⚠️ High/Expired certificates found. Sending Slack Alert..."
+              $endpoints = Get-Content endpoints.json | ConvertFrom-Json
+              foreach ($alert in $alerts) {
+                  $endpoint = $endpoints | Where-Object { $_.hostname -eq $alert.hostname }
+                  $alert | Add-Member -NotePropertyName owner -NotePropertyValue ($endpoint.owner) -Force
+              }
+              .\Send-SlackAlert.ps1 $alerts
+          } else {
+              Write-Host "✅ No critical SSL alerts detected."
+          }
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+      # ✅ GitHub Issue Creation
+      - name: Create GitHub Issue for High/Error SSL Certificates
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('sslCertificateDetails.json'));
+            const endpoints = JSON.parse(fs.readFileSync('endpoints.json'));
+
+            const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: issueTitle,
-              body: `
-### SSL Certificate Alert 🚨
-
-- **Hostname:** ${risk.hostname}  
-- **Severity:** ${risk.Severity}  
-- **Days Left:** ${risk.DaysToExpire}  
-- **Environment:** ${risk.environment}  
-- **Owner:** ${endpoint?.owner || 'Not Assigned'}  
-
-Please renew this SSL certificate immediately.
-
-*(This issue was auto-generated by GitHub Actions SSL monitoring.)*
-              `,
-              labels: ["SSL Certificate", risk.Severity],
+              state: "open"
             });
-          }
-        }
-      }
+
+            const existingTitles = issues.data.map(issue => issue.title);
+
+            for (const risk of data.filter(d => ["High","Error"].includes(d.Severity))) {
+              const endpoint = endpoints.find(e => e.hostname === risk.hostname);
+              const issueTitle = `🚨 SSL Alert: ${risk.hostname} (${risk.Severity} severity)`;
+
+              if (!existingTitles.includes(issueTitle)) {
+                const issueBody = [
+                  "### SSL Certificate Alert 🚨",
+                  "",
+                  `- **Hostname:** ${risk.hostname}`,
+                  `- **Severity:** ${risk.Severity}`,
+                  `- **Days Left:** ${risk.DaysToExpire}`,
+                  `- **Environment:** ${risk.environment}`,
+                  `- **Owner:** ${endpoint?.owner || "Not Assigned"}`,
+                  "",
+                  "Please renew this SSL certificate immediately.",
+                  "",
+                  "*(This issue was automatically generated by GitHub Actions SSL monitoring.)*"
+                ].join("\n");
+
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: issueBody,
+                  labels: ["SSL Certificate", risk.Severity],
+                });
+              }
+            }
+
+  deploy:
+    if: ${{ always() }}
+    name: Deploy to GitHub Pages
+    needs: check_ssl_expiry
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SSL Expiry Custom HTML Report
+          path: .
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
