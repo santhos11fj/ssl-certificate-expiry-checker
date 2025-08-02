@@ -7,7 +7,7 @@ on:
     branches: ["main"]
   workflow_dispatch:
   schedule:
-    - cron: '0 1 * * 1,2,3,4,5'
+    - cron: '0 0 * * *'   # ✅ Safe daily schedule (runs once per day at 00:00 UTC)
 
 env:
   TEST_MODE: "false"   # ✅ Set to "true" to force test alerts, "false" for production
@@ -18,6 +18,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ✅ Display Trigger Type in Logs
+      - name: Show Trigger Event
+        run: |
+          echo "✅ Workflow Trigger Type: $GITHUB_EVENT_NAME"
+          echo "👤 Triggered By: $GITHUB_ACTOR"
+          echo "🌿 Branch: $GITHUB_REF"
+
       - uses: actions/checkout@v4
 
       - name: Check SSL Expiry
