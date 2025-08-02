@@ -64,5 +64,11 @@
     "hostname": "mail.google.com",
     "environment": "prod",
     "owner": "communications-team@example.com"
+  },
+{
+    "service": "external",
+    "hostname": "www.hilton.com",
+    "environment": "prod",
+    "owner": "risk-team@example.com"
   }
 ]
