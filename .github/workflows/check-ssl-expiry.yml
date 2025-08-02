@@ -7,7 +7,7 @@ on:
     branches: ["main"]
   workflow_dispatch:
   schedule:
-  - cron: '*/5 * * * *'   # ✅ Temporary: runs every 5 minutes for testing
+  - cron: '0 0 * * *'   # ✅ Safe daily schedule (runs once per day at 00:00 UTC)
 
 env:
   TEST_MODE: "false"   # ✅ Set to "true" to force test alerts, "false" for production
