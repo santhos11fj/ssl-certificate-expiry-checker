@@ -64,11 +64,5 @@
     "hostname": "mail.google.com",
     "environment": "prod",
     "owner": "communications-team@example.com"
-  },
-  {
-  "service": "test",
-  "hostname": "expired.test.com",
-  "environment": "prod",
-  "owner": "qa-team@example.com"
-}
+  }
 ]
