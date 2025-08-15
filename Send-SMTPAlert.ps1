@@ -13,22 +13,30 @@ param(
 )
 
 try {
-    # Create credential object with App Password
     $securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
     $credential = New-Object System.Management.Automation.PSCredential ($Username, $securePassword)
 
-    # Send the email
-    Send-MailMessage `
-        -From $From `
-        -To $To `
-        -Cc $Cc `
-        -Bcc $Bcc `
-        -Subject $Subject `
-        -BodyAsHtml $BodyHtml `
-        -SmtpServer $SmtpServer `
-        -Port $SmtpPort `
-        -UseSsl `
-        -Credential $credential
+    $mailParams = @{
+        From        = $From
+        To          = $To
+        Subject     = $Subject
+        Body        = $BodyHtml
+        BodyAsHtml  = $true
+        SmtpServer  = $SmtpServer
+        Port        = $SmtpPort
+        UseSsl      = $true
+        Credential  = $credential
+    }
+
+    # Add Cc and Bcc only if provided
+    if ($Cc -and $Cc.Count -gt 0) {
+        $mailParams['Cc'] = $Cc
+    }
+    if ($Bcc -and $Bcc.Count -gt 0) {
+        $mailParams['Bcc'] = $Bcc
+    }
+
+    Send-MailMessage @mailParams
 
     Write-Host "✅ SMTP email sent successfully."
 }
