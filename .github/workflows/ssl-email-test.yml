@@ -19,30 +19,31 @@ jobs:
       - name: Verify scripts exist (debug)
         shell: pwsh
         run: |
-          $files = @("Send-SMTPAlert.ps1", "Send-ExpiryEmail.ps1")
+          $files = @("Send-SMTPAlert.ps1","Send-ExpiryEmail.ps1")
           foreach ($file in $files) {
-            if (Test-Path $file) {
-              Write-Host "FOUND: $file"
-            } else {
-              Write-Error "MISSING: $file"
+            if (-Not (Test-Path $file)) {
+              Write-Error "Missing required file: $file"
+              exit 1
             }
           }
 
       - name: Create test JSON with High severity
-        shell: pwsh
         run: |
-          @(
-            @{
-              Host="example.com"; Issuer="Let's Encrypt";
-              ExpiryDate=[DateTime]::UtcNow.AddDays(5).ToString("yyyy-MM-dd");
-              DaysRemaining=5; Severity="High"; Owner="***"
-            }
-          ) | ConvertTo-Json | Set-Content .\sslCertificateDetails.json
-          Write-Host "Created sslCertificateDetails.json"
-          Get-Content .\sslCertificateDetails.json
+          echo '[{"domain": "example.com", "severity": "High", "days_left": 5, "owner": "security-team@example.com"}]' > test.json
 
       - name: Send SMTP email (Outlook)
         shell: pwsh
+        run: |
+          ./Send-SMTPAlert.ps1 `
+            -SmtpServer $env:SMTP_SERVER `
+            -SmtpPort $env:SMTP_PORT `
+            -UseSsl `
+            -From $env:SMTP_FROM `
+            -To $env:SMTP_TO `
+            -Subject "Test SSL Email from GitHub Actions" `
+            -BodyHtml "<p>This is a test email from GitHub Actions via Outlook SMTP.</p>" `
+            -Username $env:SMTP_USER `
+            -Password $env:SMTP_PASS
         env:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
@@ -50,10 +51,3 @@ jobs:
           SMTP_TO: ${{ secrets.SMTP_TO }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
-        run: |
-          ./Send-SMTPAlert.ps1 -smtpServer $env:SMTP_SERVER -smtpPort $env:SMTP_PORT `
-            -smtpFrom $env:SMTP_FROM -smtpTo $env:SMTP_TO -smtpUser $env:SMTP_USER `
-            -smtpPass $env:SMTP_PASS -subject "SSL Test Alert" -body "This is a test email from GitHub Actions via Outlook SMTP."
-
-      - name: Confirm email sent
-        run: echo "✅ SMTP alert sent"
