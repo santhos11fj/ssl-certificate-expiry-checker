@@ -44,8 +44,8 @@ jobs:
         shell: pwsh
         run: |
           ./Send-SMTPAlert.ps1 `
-            -SmtpServer "smtp.office365.com" `
-            -SmtpPort 587 `
+            -SmtpServer "${{ secrets.SMTP_SERVER }}" `
+            -SmtpPort ${{ secrets.SMTP_PORT }} `
             -UseSsl `
             -From "${{ secrets.SMTP_FROM }}" `
             -To @("${{ secrets.SMTP_TO }}") `
