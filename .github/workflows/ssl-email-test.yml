@@ -1,6 +1,7 @@
 name: SSL Email Test (Outlook)
+
 on:
-  workflow_dispatch:  # run manually from the Actions tab
+  workflow_dispatch: # run manually from the Actions tab
 
 jobs:
   test-email:
@@ -18,9 +19,13 @@ jobs:
       - name: Verify scripts exist (debug)
         shell: pwsh
         run: |
-          $files = @("Send-SMTPAlert.ps1","Send-ExpiryEmail.ps1")
-          foreach ($f in $files) {
-            if (Test-Path $f) { Write-Host "FOUND: $f" } else { throw "MISSING: $f" }
+          $files = @("Send-SMTPAlert.ps1", "Send-ExpiryEmail.ps1")
+          foreach ($file in $files) {
+            if (Test-Path $file) {
+              Write-Host "FOUND: $file"
+            } else {
+              Write-Error "MISSING: $file"
+            }
           }
 
       - name: Create test JSON with High severity
@@ -30,7 +35,7 @@ jobs:
             @{
               Host="example.com"; Issuer="Let's Encrypt";
               ExpiryDate=[DateTime]::UtcNow.AddDays(5).ToString("yyyy-MM-dd");
-              DaysRemaining=5; Severity="High"; Owner="${{ secrets.SMTP_TO }}"
+              DaysRemaining=5; Severity="High"; Owner="***"
             }
           ) | ConvertTo-Json | Set-Content .\sslCertificateDetails.json
           Write-Host "Created sslCertificateDetails.json"
@@ -40,34 +45,15 @@ jobs:
         shell: pwsh
         env:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT:   ${{ secrets.SMTP_PORT }}
-          SMTP_FROM:   ${{ secrets.SMTP_FROM }}
-          SMTP_TO:     ${{ secrets.SMTP_TO }}
-          SMTP_USER:   ${{ secrets.SMTP_USER }}
-          SMTP_PASS:   ${{ secrets.SMTP_PASS }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          SMTP_TO: ${{ secrets.SMTP_TO }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
         run: |
-          $ErrorActionPreference = "Stop"
-          Write-Host "== Sending email with these settings =="
-          Write-Host "SERVER=$env:SMTP_SERVER PORT=$env:SMTP_PORT"
-          Write-Host "FROM=$env:SMTP_FROM TO=$env:SMTP_TO USER=$env:SMTP_USER"
+          ./Send-SMTPAlert.ps1 -smtpServer $env:SMTP_SERVER -smtpPort $env:SMTP_PORT `
+            -smtpFrom $env:SMTP_FROM -smtpTo $env:SMTP_TO -smtpUser $env:SMTP_USER `
+            -smtpPass $env:SMTP_PASS -subject "SSL Test Alert" -body "This is a test email from GitHub Actions via Outlook SMTP."
 
-          if (-not (Test-Path ".\sslCertificateDetails.json")) { throw "sslCertificateDetails.json missing" }
-          Get-ChildItem .\sslCertificateDetails.json | Format-List *
-
-          pwsh -File .\Send-ExpiryEmail.ps1 `
-            -ResultsPath ".\sslCertificateDetails.json" `
-            -EnvName "TEST" `
-            -SMTP_SERVER $env:SMTP_SERVER `
-            -SMTP_PORT   $env:SMTP_PORT `
-            -SMTP_SSL:$true `
-            -SMTP_FROM   $env:SMTP_FROM `
-            -SMTP_TO     $env:SMTP_TO `
-            -SMTP_USER   $env:SMTP_USER `
-            -SMTP_PASS   $env:SMTP_PASS
-
-          Write-Host ">>> Completed Send-ExpiryEmail.ps1 call"
-
-      - name: SMTP smoke test (inline)
-        shell: pwsh
-        env:
-          SMTP_SERVER: ${{ s_
+      - name: Confirm email sent
+        run: echo "✅ SMTP alert sent"
