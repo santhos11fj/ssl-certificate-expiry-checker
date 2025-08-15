@@ -41,10 +41,34 @@ jobs:
         shell: pwsh
         env:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT:   ${{ secrets.SMTP_PORT }}      # must be 587 in the secret (no quotes)
+          SMTP_PORT:   ${{ secrets.SMTP_PORT }}
           SMTP_FROM:   ${{ secrets.SMTP_FROM }}
           SMTP_TO:     ${{ secrets.SMTP_TO }}
           SMTP_USER:   ${{ secrets.SMTP_USER }}
           SMTP_PASS:   ${{ secrets.SMTP_PASS }}
         run: |
-          $ErrorActionPre
+          $ErrorActionPreference = "Stop"
+          Write-Host "== Sending email with these settings =="
+          Write-Host "SERVER=$env:SMTP_SERVER PORT=$env:SMTP_PORT"
+          Write-Host "FROM=$env:SMTP_FROM TO=$env:SMTP_TO USER=$env:SMTP_USER"
+
+          if (-not (Test-Path ".\sslCertificateDetails.json")) { throw "sslCertificateDetails.json missing" }
+          Get-ChildItem .\sslCertificateDetails.json | Format-List *
+
+          pwsh -File .\Send-ExpiryEmail.ps1 `
+            -ResultsPath ".\sslCertificateDetails.json" `
+            -EnvName "TEST" `
+            -SMTP_SERVER $env:SMTP_SERVER `
+            -SMTP_PORT   $env:SMTP_PORT `
+            -SMTP_SSL:$true `
+            -SMTP_FROM   $env:SMTP_FROM `
+            -SMTP_TO     $env:SMTP_TO `
+            -SMTP_USER   $env:SMTP_USER `
+            -SMTP_PASS   $env:SMTP_PASS
+
+          Write-Host ">>> Completed Send-ExpiryEmail.ps1 call"
+
+      - name: SMTP smoke test (inline)
+        shell: pwsh
+        env:
+          SMTP_SERVER: ${{ s_
