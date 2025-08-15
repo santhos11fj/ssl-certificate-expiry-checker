@@ -7,10 +7,10 @@ on:
     branches: ["main"]
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'   # ✅ Safe daily schedule (runs once per day at 00:00 UTC)
+    - cron: '0 0 * * *'
 
 env:
-  TEST_MODE: "false"   # ✅ Set to "true" to force test alerts, "false" for production
+  TEST_MODE: "false"
 
 jobs:
   check_ssl_expiry:
@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ✅ Display Trigger Type in Logs
       - name: Show Trigger Event
         run: |
           echo "✅ Workflow Trigger Type: $GITHUB_EVENT_NAME"
@@ -30,10 +29,8 @@ jobs:
       - name: Check SSL Expiry
         if: env.TEST_MODE == 'false'
         shell: pwsh
-        run: |
-          ./check-ssl-expiry.ps1
+        run: ./check-ssl-expiry.ps1
 
-      # ✅ Test Mode Injection Step (Only Runs if TEST_MODE is true)
       - name: Inject Dummy SSL Data (Test Mode)
         if: env.TEST_MODE == 'true'
         run: |
@@ -57,62 +54,53 @@ jobs:
             -OutputFile ./TestResults.xml `
             -OutputFormat JUnitXml
 
-      # ✅ Slack & Email Alerts Integration
       - name: Send Slack and Email Alert if High/Error SSL Certificates Found
         if: always()
         shell: pwsh
         run: |
           $data = Get-Content sslCertificateDetails.json | ConvertFrom-Json
           $alerts = $data | Where-Object { $_.Severity -in @("High","Error") }
-
           if ($alerts.Count -gt 0) {
-              Write-Host "⚠️ High/Expired certificates found. Sending Slack Alert..."
+              Write-Host "⚠️ High/Expired certificates found. Sending Slack & Email Alerts..."
               $endpoints = Get-Content endpoints.json | ConvertFrom-Json
               foreach ($alert in $alerts) {
                   $endpoint = $endpoints | Where-Object { $_.hostname -eq $alert.hostname }
                   $alert | Add-Member -NotePropertyName owner -NotePropertyValue ($endpoint.owner) -Force
               }
+              # Send to Slack
               .\Send-SlackAlert.ps1 $alerts
+              # Send Email
+              $smtpServer = "smtp.gmail.com"
+              $smtpPort = 587
+              $smtpUser = "${{ secrets.SMTP_USER }}"
+              $smtpPass = "${{ secrets.SMTP_PASS }}" | ConvertTo-SecureString -AsPlainText -Force
+              $from = "${{ secrets.SMTP_USER }}"
+              $to = "santhoshteam1205@outlook.com"
 
-              Write-Host "📧 Sending Email Alert to santhoshteam1205@outlook.com..."
-              $rows = $alerts | ForEach-Object {
-                  "<tr>
-                      <td>$($_.hostname)</td>
-                      <td>$($_.Severity)</td>
-                      <td>$($_.DaysToExpire)</td>
-                      <td>$($_.environment)</td>
-                      <td>$($_.owner)</td>
-                   </tr>"
-              } | Out-String
-
+              $subject = "SSL Expiry Alert - High Severity"
+              $rows = ""
+              foreach ($alert in $alerts) {
+                  $rows += "<tr><td>$($alert.hostname)</td><td>$($alert.Severity)</td><td>$($alert.DaysToExpire)</td><td>$($alert.environment)</td><td>$($alert.owner)</td></tr>"
+              }
               $body = @"
-              <h2>SSL Expiry Alert Detected</h2>
-              <p>The following certificates are near expiry or expired:</p>
-              <table border='1' cellpadding='6' cellspacing='0'>
-                <tr>
-                  <th>Hostname</th><th>Severity</th><th>Days Left</th><th>Environment</th><th>Owner</th>
-                </tr>
-                $rows
-              </table>
-              "@
-
-              ./Send-SMTPAlert.ps1 `
-                -SmtpServer "smtp.gmail.com" `
-                -SmtpPort 587 `
-                -UseSsl `
-                -From "${{ secrets.SMTP_FROM }}" `
-                -To @("santhoshteam1205@outlook.com") `
-                -Subject "SSL Expiry Alert - GitHub Actions" `
-                -BodyHtml $body `
-                -Username "${{ secrets.SMTP_USER }}" `
-                -Password "${{ secrets.SMTP_PASS }}"
+<h2>SSL Expiry Alert Detected</h2>
+<p>The following certificates are near expiry or expired:</p>
+<table border='1' cellpadding='6' cellspacing='0'>
+<tr>
+<th>Hostname</th><th>Severity</th><th>Days Left</th><th>Environment</th><th>Owner</th>
+</tr>
+$rows
+</table>
+"@
+              Send-MailMessage -From $from -To $to -Subject $subject -Body $body -BodyAsHtml `
+                -SmtpServer $smtpServer -Port $smtpPort -UseSsl `
+                -Credential (New-Object System.Management.Automation.PSCredential($smtpUser, $smtpPass))
           } else {
               Write-Host "✅ No critical SSL alerts detected."
           }
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
-      # ✅ GitHub Issue Creation
       - name: Create GitHub Issue for High/Error SSL Certificates
         if: always()
         uses: actions/github-script@v7
@@ -137,3 +125,60 @@ jobs:
 
               if (!existingTitles.includes(issueTitle)) {
                 const issueBody = [
+                  "### SSL Certificate Alert 🚨",
+                  "",
+                  `- **Hostname:** ${risk.hostname}`,
+                  `- **Severity:** ${risk.Severity}`,
+                  `- **Days Left:** ${risk.DaysToExpire}`,
+                  `- **Environment:** ${risk.environment}`,
+                  `- **Owner:** ${endpoint?.owner || "Not Assigned"}`,
+                  "",
+                  "Please renew this SSL certificate immediately.",
+                  "",
+                  "*(This issue was automatically generated by GitHub Actions SSL monitoring.)*"
+                ].join("\n");
+
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: issueBody,
+                  labels: ["SSL Certificate", risk.Severity],
+                });
+              }
+            }
+
+  deploy:
+    if: ${{ always() }}
+    name: Deploy to GitHub Pages
+    needs: check_ssl_expiry
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SSL Expiry Custom HTML Report
+          path: .
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
