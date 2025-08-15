@@ -1,5 +1,4 @@
 name: SSL Email Test (Outlook)
-
 on:
   workflow_dispatch:  # run manually from the Actions tab
 
