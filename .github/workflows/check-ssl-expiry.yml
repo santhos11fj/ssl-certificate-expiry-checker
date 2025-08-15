@@ -7,10 +7,10 @@ on:
     branches: ["main"]
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'   # ✅ Daily schedule at 00:00 UTC
+  - cron: '0 0 * * *'   # ✅ Safe daily schedule (runs once per day at 00:00 UTC)
 
 env:
-  TEST_MODE: "false"
+  TEST_MODE: "false"   # ✅ Set to "true" to force test alerts, "false" for production
 
 jobs:
   check_ssl_expiry:
@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ✅ Display Trigger Type in Logs
       - name: Show Trigger Event
         run: |
           echo "✅ Workflow Trigger Type: $GITHUB_EVENT_NAME"
@@ -32,6 +33,7 @@ jobs:
         run: |
           ./check-ssl-expiry.ps1
 
+      # ✅ Test Mode Injection Step (Only Runs if TEST_MODE is true)
       - name: Inject Dummy SSL Data (Test Mode)
         if: env.TEST_MODE == 'true'
         run: |
@@ -55,59 +57,28 @@ jobs:
             -OutputFile ./TestResults.xml `
             -OutputFormat JUnitXml
 
-      # ✅ Slack + Email Alert Integration
-      - name: Send Slack and Email Alert if High/Error SSL Certificates Found
+      # ✅ Slack Alert Integration
+      - name: Send Slack Alert if High/Error SSL Certificates Found
         if: always()
         shell: pwsh
         run: |
           $data = Get-Content sslCertificateDetails.json | ConvertFrom-Json
           $alerts = $data | Where-Object { $_.Severity -in @("High","Error") }
           if ($alerts.Count -gt 0) {
-              Write-Host "⚠️ High/Expired certificates found. Sending alerts..."
-              
+              Write-Host "⚠️ High/Expired certificates found. Sending Slack Alert..."
               $endpoints = Get-Content endpoints.json | ConvertFrom-Json
               foreach ($alert in $alerts) {
                   $endpoint = $endpoints | Where-Object { $_.hostname -eq $alert.hostname }
                   $alert | Add-Member -NotePropertyName owner -NotePropertyValue ($endpoint.owner) -Force
               }
-
-              # Send to Slack
-              ./Send-SlackAlert.ps1 $alerts
-
-              # Email settings
-              $smtpServer = "smtp.gmail.com"
-              $smtpPort = 587
-              $smtpUser = "${{ secrets.SMTP_USER }}"
-              $smtpPass = "${{ secrets.SMTP_PASS }}" | ConvertTo-SecureString -AsPlainText -Force
-              $from = "${{ secrets.SMTP_USER }}"
-              $to = "santhoshteam1205@outlook.com"
-              $subject = "SSL Expiry Alert - High Severity"
-
-              # Build HTML table rows
-              $rows = ""
-              foreach ($alert in $alerts) {
-                  $rows += "<tr><td>$($alert.hostname)</td><td>$($alert.Severity)</td><td>$($alert.DaysToExpire)</td><td>$($alert.environment)</td><td>$($alert.owner)</td></tr>"
-              }
-
-              # HTML email body
-              $body = @"
-              <h2>SSL Expiry Alert Detected</h2>
-              <p>The following certificates are near expiry or expired:</p>
-              <table border='1' cellpadding='6' cellspacing='0'>
-              <tr><th>Hostname</th><th>Severity</th><th>Days Left</th><th>Environment</th><th>Owner</th></tr>
-              $rows
-              </table>
-              "@
-
-              Send-MailMessage -From $from -To $to -Subject $subject -Body $body -BodyAsHtml -SmtpServer $smtpServer -Port $smtpPort -UseSsl -Credential (New-Object System.Management.Automation.PSCredential($smtpUser, $smtpPass))
-          }
-          else {
+              .\Send-SlackAlert.ps1 $alerts
+          } else {
               Write-Host "✅ No critical SSL alerts detected."
           }
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
-      # GitHub Issue Creation
+      # ✅ GitHub Issue Creation
       - name: Create GitHub Issue for High/Error SSL Certificates
         if: always()
         uses: actions/github-script@v7
