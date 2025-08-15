@@ -1,4 +1,4 @@
-name: SSL Email Test (Outlook)
+name: SSL Email Test (Gmail)
 
 on:
   workflow_dispatch: # run manually from the Actions tab
@@ -40,16 +40,16 @@ jobs:
           ) | ConvertTo-Json -Depth 3
           $json | Out-File -FilePath test.json -Encoding utf8
 
-      - name: Send SMTP email (Outlook)
+      - name: Send SMTP email (Gmail)
         shell: pwsh
         run: |
           ./Send-SMTPAlert.ps1 `
-            -SmtpServer "${{ secrets.SMTP_SERVER }}" `
-            -SmtpPort ${{ secrets.SMTP_PORT }} `
+            -SmtpServer "smtp.gmail.com" `
+            -SmtpPort 587 `
             -UseSsl `
             -From "${{ secrets.SMTP_FROM }}" `
             -To @("${{ secrets.SMTP_TO }}") `
-            -Subject "Test SSL Alert - Outlook" `
-            -BodyHtml "<h3>This is a test email from GitHub Actions SSL workflow using Outlook SMTP.</h3>" `
+            -Subject "Test SSL Alert - Gmail" `
+            -BodyHtml "<h3>This is a test email from GitHub Actions SSL workflow using Gmail SMTP.</h3>" `
             -Username "${{ secrets.SMTP_USER }}" `
             -Password "${{ secrets.SMTP_PASS }}"
