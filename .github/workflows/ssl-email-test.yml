@@ -19,35 +19,37 @@ jobs:
       - name: Verify scripts exist (debug)
         shell: pwsh
         run: |
-          $files = @("Send-SMTPAlert.ps1","Send-ExpiryEmail.ps1")
+          $files = @("Send-SMTPAlert.ps1", "Send-ExpiryEmail.ps1")
           foreach ($file in $files) {
             if (-Not (Test-Path $file)) {
-              Write-Error "Missing required file: $file"
+              Write-Error "Missing required script: $file"
               exit 1
             }
           }
 
       - name: Create test JSON with High severity
+        shell: pwsh
         run: |
-          echo '[{"domain": "example.com", "severity": "High", "days_left": 5, "owner": "security-team@example.com"}]' > test.json
+          $json = @(
+            @{
+              severity = "high"
+              domain   = "example.com"
+              daysLeft = 5
+              expiryDate = (Get-Date).AddDays(5).ToString("yyyy-MM-dd")
+            }
+          ) | ConvertTo-Json -Depth 3
+          $json | Out-File -FilePath test.json -Encoding utf8
 
       - name: Send SMTP email (Outlook)
         shell: pwsh
         run: |
           ./Send-SMTPAlert.ps1 `
-            -SmtpServer $env:SMTP_SERVER `
-            -SmtpPort $env:SMTP_PORT `
+            -SmtpServer "smtp.office365.com" `
+            -SmtpPort 587 `
             -UseSsl `
-            -From $env:SMTP_FROM `
-            -To $env:SMTP_TO `
-            -Subject "Test SSL Email from GitHub Actions" `
-            -BodyHtml "<p>This is a test email from GitHub Actions via Outlook SMTP.</p>" `
-            -Username $env:SMTP_USER `
-            -Password $env:SMTP_PASS
-        env:
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_FROM: ${{ secrets.SMTP_FROM }}
-          SMTP_TO: ${{ secrets.SMTP_TO }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+            -From "${{ secrets.SMTP_FROM }}" `
+            -To @("${{ secrets.SMTP_TO }}") `
+            -Subject "Test SSL Alert - Outlook" `
+            -BodyHtml "<h3>This is a test email from GitHub Actions SSL workflow using Outlook SMTP.</h3>" `
+            -Username "${{ secrets.SMTP_USER }}" `
+            -Password "${{ secrets.SMTP_PASS }}"
