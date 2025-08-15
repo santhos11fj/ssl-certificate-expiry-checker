@@ -12,25 +12,27 @@ param(
   [Parameter(Mandatory=$true)][string]$Password
 )
 
-$mail = New-Object System.Net.Mail.MailMessage
-$mail.From = $From
-$To  | ForEach-Object { $mail.To.Add($_) }
-$Cc  | Where-Object { $_ } | ForEach-Object { $mail.CC.Add($_) }
-$Bcc | Where-Object { $_ } | ForEach-Object { $mail.Bcc.Add($_) }
-$mail.Subject = $Subject
-$mail.IsBodyHtml = $true
-$mail.Body = $BodyHtml
-
-$client = New-Object System.Net.Mail.SmtpClient($SmtpServer, $SmtpPort)
-$client.EnableSsl = $true  # Always true for Outlook
-$client.UseDefaultCredentials = $false
-$client.DeliveryMethod = [System.Net.Mail.SmtpDeliveryMethod]::Network
-$client.Credentials = New-Object System.Net.NetworkCredential($Username, $Password)
-
 try {
-  $client.Send($mail)
-  Write-Host "✅ SMTP alert sent successfully."
-} catch {
-  Write-Error "❌ Failed to send SMTP alert: $($_.Exception.Message)"
-  exit 1
+    # Create credential object with App Password
+    $securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+    $credential = New-Object System.Management.Automation.PSCredential ($Username, $securePassword)
+
+    # Send the email
+    Send-MailMessage `
+        -From $From `
+        -To $To `
+        -Cc $Cc `
+        -Bcc $Bcc `
+        -Subject $Subject `
+        -BodyAsHtml $BodyHtml `
+        -SmtpServer $SmtpServer `
+        -Port $SmtpPort `
+        -UseSsl `
+        -Credential $credential
+
+    Write-Host "✅ SMTP email sent successfully."
+}
+catch {
+    Write-Error "❌ Failed to send SMTP alert: $($_.Exception.Message)"
+    exit 1
 }
