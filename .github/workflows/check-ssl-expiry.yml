@@ -1,14 +1,70 @@
+name: check-ssl-expiry
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'   # ✅ Daily schedule at 00:00 UTC
+
+env:
+  TEST_MODE: "false"
+
+jobs:
+  check_ssl_expiry:
+    name: 'Check SSL Expiry'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show Trigger Event
+        run: |
+          echo "✅ Workflow Trigger Type: $GITHUB_EVENT_NAME"
+          echo "👤 Triggered By: $GITHUB_ACTOR"
+          echo "🌿 Branch: $GITHUB_REF"
+
+      - uses: actions/checkout@v4
+
+      - name: Check SSL Expiry
+        if: env.TEST_MODE == 'false'
+        shell: pwsh
+        run: |
+          ./check-ssl-expiry.ps1
+
+      - name: Inject Dummy SSL Data (Test Mode)
+        if: env.TEST_MODE == 'true'
+        run: |
+          echo '[{"hostname":"expired.test.com","Severity":"High","DaysToExpire":1,"environment":"prod"}]' > sslCertificateDetails.json
+        shell: bash
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SSL Expiry Custom HTML Report
+          path: ./_site
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Run Pester Tests
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -Force -SkipPublisherCheck
+          Import-Module Pester
+          Invoke-Pester -Script ./tests/Run-Tests.ps1 `
+            -OutputFile ./TestResults.xml `
+            -OutputFormat JUnitXml
+
+      # ✅ Slack + Email Alert Integration
       - name: Send Slack and Email Alert if High/Error SSL Certificates Found
         if: always()
         shell: pwsh
         run: |
           $data = Get-Content sslCertificateDetails.json | ConvertFrom-Json
           $alerts = $data | Where-Object { $_.Severity -in @("High","Error") }
-
           if ($alerts.Count -gt 0) {
-              Write-Host "⚠️ High/Expired certificates found. Sending Slack and Email Alert..."
-
-              # Add owner info from endpoints.json
+              Write-Host "⚠️ High/Expired certificates found. Sending alerts..."
+              
               $endpoints = Get-Content endpoints.json | ConvertFrom-Json
               foreach ($alert in $alerts) {
                   $endpoint = $endpoints | Where-Object { $_.hostname -eq $alert.hostname }
@@ -16,16 +72,15 @@
               }
 
               # Send to Slack
-              .\Send-SlackAlert.ps1 $alerts
+              ./Send-SlackAlert.ps1 $alerts
 
-              # Send Email via Gmail SMTP
+              # Email settings
               $smtpServer = "smtp.gmail.com"
               $smtpPort = 587
               $smtpUser = "${{ secrets.SMTP_USER }}"
               $smtpPass = "${{ secrets.SMTP_PASS }}" | ConvertTo-SecureString -AsPlainText -Force
               $from = "${{ secrets.SMTP_USER }}"
               $to = "santhoshteam1205@outlook.com"
-
               $subject = "SSL Expiry Alert - High Severity"
 
               # Build HTML table rows
@@ -36,15 +91,13 @@
 
               # HTML email body
               $body = @"
-<h2>SSL Expiry Alert Detected</h2>
-<p>The following certificates are near expiry or expired:</p>
-<table border='1' cellpadding='6' cellspacing='0'>
-<tr>
-<th>Hostname</th><th>Severity</th><th>Days Left</th><th>Environment</th><th>Owner</th>
-</tr>
-$rows
-</table>
-"@
+              <h2>SSL Expiry Alert Detected</h2>
+              <p>The following certificates are near expiry or expired:</p>
+              <table border='1' cellpadding='6' cellspacing='0'>
+              <tr><th>Hostname</th><th>Severity</th><th>Days Left</th><th>Environment</th><th>Owner</th></tr>
+              $rows
+              </table>
+              "@
 
               Send-MailMessage -From $from -To $to -Subject $subject -Body $body -BodyAsHtml -SmtpServer $smtpServer -Port $smtpPort -UseSsl -Credential (New-Object System.Management.Automation.PSCredential($smtpUser, $smtpPass))
           }
@@ -53,3 +106,86 @@ $rows
           }
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+      # GitHub Issue Creation
+      - name: Create GitHub Issue for High/Error SSL Certificates
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('sslCertificateDetails.json'));
+            const endpoints = JSON.parse(fs.readFileSync('endpoints.json'));
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open"
+            });
+
+            const existingTitles = issues.data.map(issue => issue.title);
+
+            for (const risk of data.filter(d => ["High","Error"].includes(d.Severity))) {
+              const endpoint = endpoints.find(e => e.hostname === risk.hostname);
+              const issueTitle = `🚨 SSL Alert: ${risk.hostname} (${risk.Severity} severity)`;
+
+              if (!existingTitles.includes(issueTitle)) {
+                const issueBody = [
+                  "### SSL Certificate Alert 🚨",
+                  "",
+                  `- **Hostname:** ${risk.hostname}`,
+                  `- **Severity:** ${risk.Severity}`,
+                  `- **Days Left:** ${risk.DaysToExpire}`,
+                  `- **Environment:** ${risk.environment}`,
+                  `- **Owner:** ${endpoint?.owner || "Not Assigned"}`,
+                  "",
+                  "Please renew this SSL certificate immediately.",
+                  "",
+                  "*(This issue was automatically generated by GitHub Actions SSL monitoring.)*"
+                ].join("\n");
+
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: issueTitle,
+                  body: issueBody,
+                  labels: ["SSL Certificate", risk.Severity],
+                });
+              }
+            }
+
+  deploy:
+    if: ${{ always() }}
+    name: Deploy to GitHub Pages
+    needs: check_ssl_expiry
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SSL Expiry Custom HTML Report
+          path: .
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
