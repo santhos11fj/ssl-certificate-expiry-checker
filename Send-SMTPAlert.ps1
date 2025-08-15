@@ -22,13 +22,15 @@ $mail.IsBodyHtml = $true
 $mail.Body = $BodyHtml
 
 $client = New-Object System.Net.Mail.SmtpClient($SmtpServer, $SmtpPort)
-$client.EnableSsl = [bool]$UseSsl
+$client.EnableSsl = $true  # Always true for Outlook
+$client.UseDefaultCredentials = $false
+$client.DeliveryMethod = [System.Net.Mail.SmtpDeliveryMethod]::Network
 $client.Credentials = New-Object System.Net.NetworkCredential($Username, $Password)
 
 try {
   $client.Send($mail)
-  Write-Host "SMTP alert sent."
+  Write-Host "✅ SMTP alert sent successfully."
 } catch {
-  Write-Error "Failed to send SMTP alert: $($_.Exception.Message)"
+  Write-Error "❌ Failed to send SMTP alert: $($_.Exception.Message)"
   exit 1
 }
