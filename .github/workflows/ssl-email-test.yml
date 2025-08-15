@@ -1,7 +1,7 @@
 name: SSL Email Test (Outlook)
 
 on:
-  workflow_dispatch:  # run manually from Actions tab
+  workflow_dispatch:  # run manually from the Actions tab
 
 jobs:
   test-email:
@@ -21,7 +21,7 @@ jobs:
         run: |
           $files = @("Send-SMTPAlert.ps1","Send-ExpiryEmail.ps1")
           foreach ($f in $files) {
-            if (Test-Path $f) { Write-Host "FOUND: $f" } else { Write-Error "MISSING: $f" }
+            if (Test-Path $f) { Write-Host "FOUND: $f" } else { throw "MISSING: $f" }
           }
 
       - name: Create test JSON with High severity
@@ -41,29 +41,10 @@ jobs:
         shell: pwsh
         env:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT:   ${{ secrets.SMTP_PORT }}
+          SMTP_PORT:   ${{ secrets.SMTP_PORT }}      # must be 587 in the secret (no quotes)
           SMTP_FROM:   ${{ secrets.SMTP_FROM }}
           SMTP_TO:     ${{ secrets.SMTP_TO }}
           SMTP_USER:   ${{ secrets.SMTP_USER }}
           SMTP_PASS:   ${{ secrets.SMTP_PASS }}
         run: |
-          $ErrorActionPreference = "Stop"
-
-          Write-Host "About to send email using:"
-          Write-Host "SERVER=$env:SMTP_SERVER PORT=$env:SMTP_PORT FROM=$env:SMTP_FROM TO=$env:SMTP_TO USER=$env:SMTP_USER"
-
-          if (-not (Test-Path ".\Send-ExpiryEmail.ps1")) { throw "Send-ExpiryEmail.ps1 not found in repo root." }
-          if (-not (Test-Path ".\sslCertificateDetails.json")) { throw "sslCertificateDetails.json not found." }
-
-          pwsh -File .\Send-ExpiryEmail.ps1 `
-            -ResultsPath ".\sslCertificateDetails.json" `
-            -EnvName "TEST" `
-            -SMTP_SERVER $env:SMTP_SERVER `
-            -SMTP_PORT   [int]$env:SMTP_PORT `
-            -SMTP_SSL:$true `
-            -SMTP_FROM   $env:SMTP_FROM `
-            -SMTP_TO     $env:SMTP_TO `
-            -SMTP_USER   $env:SMTP_USER `
-            -SMTP_PASS   $env:SMTP_PASS
-
-          Write-Host "If you see 'SMTP alert sent.' above, Outlook accepted it."
+          $ErrorActionPre
