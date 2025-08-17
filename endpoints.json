@@ -37,12 +37,6 @@
   },
   {
     "service": "external",
-    "hostname": "www.heathrowexpress.com",
-    "environment": "prod",
-    "owner": "healthcare-team@example.com"
-  },
-  {
-    "service": "external",
     "hostname": "www.xcover.com",
     "environment": "prod",
     "owner": "travel-team@example.com"
