@@ -31,12 +31,6 @@
   },
   {
     "service": "external",
-    "hostname": "airportr.com",
-    "environment": "prod",
-    "owner": "infra-team@example.com"
-  },
-  {
-    "service": "external",
     "hostname": "www.parkvia.com",
     "environment": "prod",
     "owner": "support-team@example.com"
@@ -52,12 +46,6 @@
     "hostname": "www.xcover.com",
     "environment": "prod",
     "owner": "travel-team@example.com"
-  },
-  {
-    "service": "external",
-    "hostname": "careers.ba.com",
-    "environment": "prod",
-    "owner": "university-it@example.com"
   },
   {
     "service": "external",
