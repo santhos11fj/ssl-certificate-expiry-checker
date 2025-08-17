@@ -31,37 +31,37 @@
   },
   {
     "service": "external",
-    "hostname": "www.microsoft.com",
+    "hostname": "airportr.com",
     "environment": "prod",
     "owner": "infra-team@example.com"
   },
   {
     "service": "external",
-    "hostname": "stackoverflow.com",
+    "hostname": "www.parkvia.com",
     "environment": "prod",
     "owner": "support-team@example.com"
   },
   {
     "service": "external",
-    "hostname": "www.nhs.uk",
+    "hostname": "www.heathrowexpress.com",
     "environment": "prod",
     "owner": "healthcare-team@example.com"
   },
   {
     "service": "external",
-    "hostname": "www.singaporeair.com",
+    "hostname": "www.xcover.com",
     "environment": "prod",
     "owner": "travel-team@example.com"
   },
   {
     "service": "external",
-    "hostname": "le.ac.uk",
+    "hostname": "careers.ba.com",
     "environment": "prod",
     "owner": "university-it@example.com"
   },
   {
     "service": "external",
-    "hostname": "mail.google.com",
+    "hostname": "www.britishairways.com",
     "environment": "prod",
     "owner": "communications-team@example.com"
   },
