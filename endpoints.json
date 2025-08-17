@@ -1,33 +1,15 @@
 [
-  {
-    "service": "service_A",
-    "hostname": "azure.microsoft.com",
+    {
+    "service": "Internal",
+    "hostname": "www.britishairways.com",
     "environment": "prod",
-    "owner": "azure-team@example.com"
-  },
-  {
-    "service": "service_B",
-    "hostname": "httpbin.org",
-    "environment": "prod",
-    "owner": "api-team@example.com"
-  },
-  {
-    "service": "service_C",
-    "hostname": "github.com",
-    "environment": "prod",
-    "owner": "dev-team@example.com"
+    "owner": "communications-team@example.com"
   },
   {
     "service": "external",
     "hostname": "www.avios.com",
     "environment": "prod",
     "owner": "devops-team@example.com"
-  },
-  {
-    "service": "external",
-    "hostname": "www.facebook.com",
-    "environment": "prod",
-    "owner": "security-team@example.com"
   },
   {
     "service": "external",
@@ -40,17 +22,5 @@
     "hostname": "www.xcover.com",
     "environment": "prod",
     "owner": "travel-team@example.com"
-  },
-  {
-    "service": "external",
-    "hostname": "www.britishairways.com",
-    "environment": "prod",
-    "owner": "communications-team@example.com"
-  },
-{
-    "service": "external",
-    "hostname": "www.hilton.com",
-    "environment": "prod",
-    "owner": "risk-team@example.com"
   }
 ]
