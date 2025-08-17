@@ -19,7 +19,7 @@
   },
   {
     "service": "external",
-    "hostname": "www.google.com",
+    "hostname": "www.avios.com",
     "environment": "prod",
     "owner": "devops-team@example.com"
   },
