@@ -94,5 +94,11 @@
     "hostname": "krislab.singaporeair.com",
     "environment": "prod",
     "owner": "krislab-research@example.com"
-  }
+  },
+  {
+    "service": "external",
+    "hostname": "www.siacargo.com",
+    "environment": "prod",
+    "owner": "cargo-research@example.com"
+  },
 ]
