@@ -1,9 +1,98 @@
 [
-    
   {
     "service": "external",
-    "hostname": "silverkris.singaporeair.com",
+    "hostname": "www.staralliance.com",
     "environment": "prod",
-    "owner": "travel-team@example.com"
+    "owner": "alliances-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.alaskaair.com",
+    "environment": "prod",
+    "owner": "partner-airlines@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.marriott.com",
+    "environment": "prod",
+    "owner": "hotel-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.hilton.com",
+    "environment": "prod",
+    "owner": "hotel-ops@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.hyatt.com",
+    "environment": "prod",
+    "owner": "hotel-support@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.americanexpress.com",
+    "environment": "prod",
+    "owner": "finance-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.paypal.com",
+    "environment": "prod",
+    "owner": "payments-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.tataaig.com",
+    "environment": "prod",
+    "owner": "insurance-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.agoda.com",
+    "environment": "prod",
+    "owner": "booking-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.krisshop.com",
+    "environment": "prod",
+    "owner": "krisshop-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.singaporeair.com",
+    "environment": "prod",
+    "owner": "sia-web@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.pelago.com",
+    "environment": "prod",
+    "owner": "pelago-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "agent360.singaporeair.com",
+    "environment": "prod",
+    "owner": "agency-support@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "developer.singaporeair.com",
+    "environment": "prod",
+    "owner": "devportal-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "www.flyscoot.com",
+    "environment": "prod",
+    "owner": "scoot-team@example.com"
+  },
+  {
+    "service": "external",
+    "hostname": "krislab.singaporeair.com",
+    "environment": "prod",
+    "owner": "krislab-research@example.com"
   }
 ]
