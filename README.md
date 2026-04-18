@@ -14,6 +14,8 @@ This project goes beyond a simple SSL checker. It provides an **end-to-end autom
 * Sends real-time Slack alerts
 * Automatically creates GitHub Issues
 * Tracks incidents in an Agile sprint board
+  
+<img width="541" height="420" alt="image" src="https://github.com/user-attachments/assets/027864e7-9371-4b5a-af77-dea2c0c349a0" />
 
 👉 The goal is to **eliminate unexpected SSL failures** and enable **proactive governance**.
 
