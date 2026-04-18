@@ -45,31 +45,7 @@ jobs:
 
           echo "=== DEBUG reports folder ==="
           ls -R reports || true
-      - name: Show Trigger Event
-        run: |
-          echo "Workflow Trigger Type: $GITHUB_EVENT_NAME"
-          echo "Triggered By: $GITHUB_ACTOR"
-          echo "Branch: $GITHUB_REF"
-
-           - uses: actions/checkout@v4
-
-      - name: Build Docker Image
-        if: env.TEST_MODE == 'false'
-        run: docker build -t ssl-governance .
-
-      - name: Run SSL Scan in Docker
-        if: env.TEST_MODE == 'false'
-        run: |
-          mkdir -p output
-          mkdir -p reports
-          docker run --rm \
-            -v ${{ github.workspace }}/endpoints.json:/app/endpoints.json \
-            -v ${{ github.workspace }}/reports:/app/reports \
-            -v ${{ github.workspace }}/output:/app/_site \
-            ssl-governance
-            echo "=== DEBUG reports folder ==="
-            ls -R reports || true
-
+          
       # ✅ Test Mode Injection Step (Only Runs if TEST_MODE is true)
       - name: Inject Dummy SSL Data (Test Mode)
         if: env.TEST_MODE == 'true'
