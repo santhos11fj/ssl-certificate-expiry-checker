@@ -1,8 +1,1 @@
-[
-  {
-    "hostname": "expired.test.com",
-    "Severity": "High",
-    "DaysToExpire": 1,
-    "environment": "prod"
-  }
-]
+[]
