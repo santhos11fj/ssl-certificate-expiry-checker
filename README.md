@@ -129,6 +129,7 @@ Example:
 ```
 SSL Alert: www.facebook.com (High severity)
 ```
+<img width="1920" height="868" alt="image" src="https://github.com/user-attachments/assets/af80464e-30d4-4cd3-b47f-ba8c7c875256" />
 
 ---
 
