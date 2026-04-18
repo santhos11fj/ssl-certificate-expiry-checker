@@ -71,7 +71,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $data = Get-Content sslCertificateDetails.json | ConvertFrom-Json
+          $data = Get-Content reports/sslCertificateDetails.json | ConvertFrom-Json
           $alerts = $data | Where-Object { $_.Severity -in @("High","Error") }
           if ($alerts.Count -gt 0) {
               Write-Host "⚠️ High/Expired certificates found. Sending Slack Alert..."
@@ -95,7 +95,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('sslCertificateDetails.json'));
+            const data = JSON.parse(fs.readFileSync('reports/sslCertificateDetails.json'));
             const endpoints = JSON.parse(fs.readFileSync('endpoints.json'));
 
             const issues = await github.rest.issues.listForRepo({
