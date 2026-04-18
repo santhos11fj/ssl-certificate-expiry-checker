@@ -155,6 +155,8 @@ SSL Alert: www.facebook.com (High severity)
 * Builds Docker container
 * Generates reports
 * Triggers alerts
+  
+<img width="1920" height="865" alt="image" src="https://github.com/user-attachments/assets/748c1f0d-7308-451f-aaf6-09e8f7aad122" />
 
 ---
 
