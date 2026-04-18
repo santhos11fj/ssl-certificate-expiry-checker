@@ -1,212 +1,258 @@
-Here is an updated **README.md** tailored to **your enhanced SSL Governance Prototype**, highlighting all original contributions you implemented:
+# 🔐 SSL Certificate Governance & Monitoring System
+
+A complete **DevSecOps-ready solution** to monitor SSL certificate expiry, generate reports, trigger alerts, and enforce governance using **Docker, GitHub Actions, Slack, and Agile workflows**.
 
 ---
 
-# 🔐 **SSL Governance & Expiry Monitoring – DevSecOps-Ready Prototype**
+## 🚀 Overview
 
-**A Complete DevSecOps Pipeline to Monitor, Alert, and Govern SSL Certificates**
+This project goes beyond a simple SSL checker. It provides an **end-to-end automated pipeline** that:
 
-<img src="docs/SSLCertificateGovernanceFramework.png" alt="SSL Governance Framework"/>
+* Scans SSL certificates for multiple domains
+* Detects expiry risks and classifies severity
+* Generates HTML reports
+* Sends real-time Slack alerts
+* Automatically creates GitHub Issues
+* Tracks incidents in an Agile sprint board
 
----
-
-## 🚀 **Overview**
-
-This prototype **evolved beyond a simple SSL expiry checker**. It integrates **monitoring**, **role-based governance**, **Slack alerts**, **GitHub issue automation**, and **Agile/DevSecOps alignment** into a single CI/CD pipeline.
-
-It **not only detects expiring SSL certificates**, but also:
-
-* **Assigns ownership** to responsible teams,
-* **Creates incident tickets** automatically,
-* **Publishes real-time HTML reports**, and
-* **Aligns with Agile sprint cycles** for continuous governance.
+👉 The goal is to **eliminate unexpected SSL failures** and enable **proactive governance**.
 
 ---
 
-## ✅ **Key Features**
+## 🏗️ Architecture (End-to-End Flow)
 
-### 🔹 **1. Advanced SSL Monitoring**
+```
+SSL Scan (PowerShell)
+        ↓
+Docker Execution
+        ↓
+JSON Output + HTML Report
+        ↓
+GitHub Actions (CI/CD)
+        ↓
+ ┌───────────────┬───────────────┐
+ │               │               │
+Slack Alerts   GitHub Issues   GitHub Pages
+ │               │               │
+Real-time     Incident        Live Dashboard
+Notifications Tracking
+```
 
-* PowerShell-based scanner retrieves:
+---
+
+## ✅ Key Features
+
+### 🔍 1. SSL Monitoring
+
+* Scans multiple domains from `endpoints.json`
+* Retrieves:
 
   * Issuer
   * Expiry Date
   * Days Remaining
-* Classifies certificates into:
-
-  * 🟢 **Safe**
-  * 🟡 **Low**
-  * 🟠 **Medium**
-  * 🔴 **High**
-  * ❌ **Error** (expired)
 
 ---
 
-### 🔹 **2. Role-Based Governance**
+### 🚨 2. Severity Classification
 
-* `endpoints.json` now includes an **owner field** (team/email).
-* Alerts and issues **tag the owner**, enabling **accountability and faster resolution**.
+Certificates are categorized as:
+
+| Severity  | Condition  |
+| --------- | ---------- |
+| 🟢 Safe   | > 90 days  |
+| 🟡 Low    | 60–90 days |
+| 🟠 Medium | 30–60 days |
+| 🔴 High   | < 30 days  |
+| ❌ Error   | Expired    |
 
 ---
 
-### 🔹 **3. Slack Notifications**
+### 👤 3. Ownership Mapping
 
-* Custom PowerShell notifier (`Send-SlackAlert.ps1`) sends grouped alerts with:
+Each domain has an **owner (team/email)**:
 
-  * Hostname
-  * Severity (color-coded in Slack)
-  * Days Remaining
+```json
+{
+  "hostname": "www.facebook.com",
+  "owner": "fb-meta@facebook.com"
+}
+```
+
+👉 Alerts include responsible owner for accountability.
+
+---
+
+### 📊 4. HTML Dashboard (GitHub Pages)
+
+* Auto-generated report
+* Displays all domains with severity
+* Hosted via GitHub Pages
+
+👉 Example:
+
+```
+output/index.html
+```
+
+---
+
+### 🔔 5. Slack Notifications
+
+* Real-time alerts using webhook
+* Includes:
+
+  * Domain
+  * Severity
+  * Days left
   * Owner
-* ✅ Verified alerts appear in the `#ssl-alerts` channel.
 
----
-
-### 🔹 **4. GitHub Issues Automation**
-
-* Integrated into CI workflow:
-
-  * Creates **issues** for **High** / **Error** severity.
-  * Includes: Domain, Severity, Days Left, Environment, Owner.
-  * ✅ Duplicate prevention avoids issue spamming.
-
----
-
-### 🔹 **5. Real-Time HTML Reporting**
-
-* Generates a color-coded **SSL Health Dashboard**.
-* Displays all endpoints with Issuer, Days Left, Severity.
-* ✅ Automatically deployed to **GitHub Pages**.
-
----
-
-### 🔹 **6. CI/CD Pipeline Integration**
-
-* **GitHub Actions Workflow**:
-
-  1. SSL Scan →
-  2. Slack Alerts →
-  3. GitHub Issues →
-  4. HTML Report Deployment
-* Runs **daily at midnight UTC** (configurable).
-
----
-
-### 🔹 **7. Agile & DevSecOps Alignment**
-
-* SSL monitoring and remediation integrated into Agile sprints:
-
-  * Alerts → backlog items
-  * GitHub Issues → sprint tasks
-  * Reports → sprint review artifacts
-* ✅ Security becomes **continuous**, not reactive.
-
----
-
-## 🏆 **What Makes This Prototype Unique**
-
-Unlike standard SSL monitoring tools or cloud-native solutions:
-
-* ✅ **Open-source** & **cost-effective**
-* ✅ Integrated **Role-Based Governance**
-* ✅ **Slack + GitHub** real-time incident management
-* ✅ **DevSecOps-ready** CI/CD pipeline
-* ✅ **HTML reporting** for stakeholders
-* ✅ **Test Mode** for safe demo runs
-
----
-
-## 📂 **Repository Structure**
+Example:
 
 ```
-/lib
- ├─ Get-RemoteCertificate.ps1      # Retrieves SSL details
- ├─ check-ssl-expiry.ps1           # Main scanner
- ├─ Send-SlackAlert.ps1            # Slack integration
- └─ Generate-HTMLReport.ps1        # Dashboard generator
-
-.github/workflows
- └─ check-ssl-expiry.yml           # CI/CD pipeline (scan → alerts → issues → report)
-
-/docs
- └─ SSLCertificateGovernanceFramework.png
-
-endpoints.json                     # List of domains + owners
-alertThresholds.json               # Severity thresholds
-sslCertificateDetails.json         # Generated scan results
+⚠️ SSL Expiry Alert Detected!
+www.facebook.com - Severity: High - Days Left: 8 - Owner: fb-meta@facebook.com
 ```
 
 ---
 
-## ⚙️ **Usage**
+### 🐙 6. GitHub Issue Automation
 
-1. **Fork/Clone** this repository.
-2. Update `endpoints.json` with your domains & owners.
-3. Configure GitHub Secrets:
+* Automatically creates issues for high-risk certificates
+* Adds labels:
 
-   * `SLACK_WEBHOOK` → Slack integration
-4. (Optional) Modify `alertThresholds.json` for custom severity thresholds.
-5. Commit changes → Workflow runs automatically.
+  * High
+  * Error
+  * SSL Certificate
 
----
-
-## 🔄 **How It Works (Pipeline Flow)**
+Example:
 
 ```
-[ GitHub Actions Trigger ]
-       ↓
-[ SSL Scan (check-ssl-expiry.ps1) ]
-       ↓
-[ JSON Report Generated ]
-       ↓
- ┌──────────────┬──────────────┬───────────────┐
- │ Slack Alerts │ GitHub Issues│ HTML Report   │
- │   (Critical) │ (Auto-Tickets│ (Dashboard)   │
- └──────────────┴──────────────┴───────────────┘
+SSL Alert: www.facebook.com (High severity)
 ```
 
 ---
 
-## 📊 **Risk Management Features**
+### 📌 7. Agile Governance (Sprint Board)
 
-The prototype incorporates **risk analysis techniques**:
+* Issues tracked in GitHub Project board
+* Workflow:
 
-* **Fishbone Diagram** → Identifies root causes of SSL failures.
-* **FMEA Table** → Quantifies risks using RPN.
-* **Pareto Chart** → Highlights top causes contributing to most outages.
+  * Backlog → Ready → In Progress → Done
 
-📌 *(These visuals are included in the documentation and dissertation.)*
-
----
-
-## 🚀 **Planned Enhancements**
-
-* 🔹 **Auto SSL Renewal** (Let’s Encrypt / Win-ACME integration)
-* 🔹 **Historical Trend Dashboard** (Chart.js)
-* 🔹 **JIRA Integration** for enterprise workflows
-* 🔹 **Multi-Cloud Policy Enforcement**
+👉 Converts alerts into actionable tasks
 
 ---
 
-## 🛠 **Built With**
+### ⚙️ 8. CI/CD Automation (GitHub Actions)
 
-* **PowerShell** (SSL Scanning & Alerting)
-* **GitHub Actions** (CI/CD pipeline)
-* **Slack Webhooks** (Real-Time Alerts)
-* **Chart.js & HTML** (Dashboard Visualization)
-
----
-
-## 📜 **License**
-
-MIT Licensed.
-You are free to use, modify, and extend this project.
+* Runs scan automatically (daily or manual)
+* Builds Docker container
+* Generates reports
+* Triggers alerts
 
 ---
 
-## 🤝 **Contributions**
+### 🐳 9. Dockerized Execution
 
-Contributions are welcome!
+* Consistent environment
+* No local dependency issues
+* Easy to run anywhere
 
-* Raise a Pull Request with enhancements.
-* Report issues under **GitHub Issues**.
+---
 
+## 🖥️ How to Run Locally (Simple)
+
+### Step 1: Clone the Repository
+
+```
+git clone https://github.com/santhos11fj/ssl-certificate-expiry-checker.git
+cd ssl-certificate-expiry-checker
+```
+
+---
+
+### Step 2: Build Docker Image
+
+```
+docker build -t ssl-governance .
+```
+
+---
+
+### Step 3: Run the Container
+
+```
+docker run --rm -v %cd%\reports:/app/reports -v %cd%\output:/app/_site ssl-governance
+```
+
+---
+
+### Step 4: View Report
+
+Open:
+
+```
+output/index.html
+```
+
+---
+
+## 🧪 Testing
+
+Modify domains in:
+
+```
+endpoints.json
+```
+
+Example:
+
+```json
+{
+  "hostname": "expired.badssl.com",
+  "owner": "test@example.com"
+}
+```
+
+Then rerun Docker command.
+
+## ⏱️ Automation Setup
+
+Workflow file:
+
+```
+.github/workflows/check-ssl-expiry.yml
+```
+---
+
+## 🎯 Real-World Use Case
+
+* Prevent website downtime due to expired SSL
+* Enable proactive security monitoring
+* Automate DevOps workflows
+* Improve team accountability
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## 🙌 Author
+
+Developed by **Santhosh**
+
+---
+
+## ⭐ Final Note
+
+This project demonstrates:
+
+✔ DevOps
+✔ Security Monitoring
+✔ Automation
+✔ CI/CD
+✔ Agile Integration
+
+👉 A complete **production-style solution**
