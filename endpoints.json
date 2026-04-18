@@ -85,12 +85,6 @@
   },
   {
     "service": "external",
-    "hostname": "krislab.singaporeair.com",
-    "environment": "prod",
-    "owner": "krislab@singaporeair.com"
-  },
-  {
-    "service": "external",
     "hostname": "www.siacargo.com",
     "environment": "prod",
     "owner": "cargo-tech@singaporeair.com"
