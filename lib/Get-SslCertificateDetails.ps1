@@ -59,4 +59,4 @@ if (!(Test-Path "/app/reports")) {
 }
 
 $sslCertificateDetails | ConvertTo-Json | Out-File "/app/reports/sslCertificateDetails.json" -Force
-Write-Host "✅ SSL certificate scan completed. Results saved to /app/reports/sslCertificateDetails.json"
+Write-Host "SSL certificate scan completed. Results saved to /app/reports/sslCertificateDetails.json"
