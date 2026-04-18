@@ -1,6 +1,6 @@
 $header = Get-Content $PSScriptRoot/../assets/report.css
 
-$sslCertificateDetails = Get-Content "$PSScriptRoot/../sslCertificateDetails.json" | ConvertFrom-Json
+$sslCertificateDetails = Get-Content "/app/reports/sslCertificateDetails.json" | ConvertFrom-Json
 
 $html = $sslCertificateDetails | Select-Object -ExcludeProperty DaysToExpire -Property service,environment,hostname,Issuer, @{n="Days To Expire"; e={$_.DaysToExpire}}, Severity | ConvertTo-Html -As Table -Head $header 
 
