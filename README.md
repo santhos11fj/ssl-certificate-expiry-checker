@@ -88,6 +88,8 @@ Each domain has an **owner (team/email)**:
 * Displays all domains with severity
 * Hosted via GitHub Pages
 
+<img width="1365" height="610" alt="image" src="https://github.com/user-attachments/assets/053afec2-b1b6-40b3-84c0-c6b46ed9dbff" />
+
 👉 Example:
 
 ```
@@ -105,6 +107,8 @@ output/index.html
   * Severity
   * Days left
   * Owner
+  
+<img width="1920" height="874" alt="image" src="https://github.com/user-attachments/assets/f25a57c5-42f3-41b4-9e19-859d5a9652d4" />
 
 Example:
 
