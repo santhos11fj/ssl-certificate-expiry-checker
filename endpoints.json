@@ -83,6 +83,12 @@
     "environment": "prod",
     "owner": "devportal@singaporeair.com"
   },
+   {
+    "service": "external",
+    "hostname": "www.facebook.com",
+    "environment": "prod",
+    "owner": "fb-meta@facebookcom"
+  },
   {
     "service": "external",
     "hostname": "www.siacargo.com",
