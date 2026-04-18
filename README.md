@@ -141,6 +141,7 @@ SSL Alert: www.facebook.com (High severity)
   * Backlog → Ready → In Progress → Done
 
 👉 Converts alerts into actionable tasks
+<img width="1920" height="871" alt="image" src="https://github.com/user-attachments/assets/3227d98b-4d58-476f-9698-dd60df0fdfb8" />
 
 ---
 
