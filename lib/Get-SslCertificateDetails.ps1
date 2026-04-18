@@ -54,5 +54,9 @@ $sslCertificateDetails = $endpoints | ForEach-Object {
 }
 
 # ✅ Save results to JSON
-$sslCertificateDetails | ConvertTo-Json | Out-File "$upperPath/sslCertificateDetails.json" -Force
-Write-Host "✅ SSL certificate scan completed. Results saved to $upperPath/sslCertificateDetails.json"
+if (!(Test-Path "/app/reports")) {
+    New-Item -ItemType Directory -Path "/app/reports" | Out-Null
+}
+
+$sslCertificateDetails | ConvertTo-Json | Out-File "/app/reports/sslCertificateDetails.json" -Force
+Write-Host "✅ SSL certificate scan completed. Results saved to /app/reports/sslCertificateDetails.json"
