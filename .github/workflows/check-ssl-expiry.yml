@@ -43,14 +43,7 @@ jobs:
 
           echo "=== DEBUG reports folder ==="
           ls -R reports || true
-
-      - name: Inject Dummy SSL Data (Test Mode)
-        if: env.TEST_MODE == 'true'
-        run: |
-          mkdir -p reports
-          echo '[{"hostname":"expired.test.com","Severity":"High","DaysToExpire":1,"environment":"prod"}]' > reports/sslCertificateDetails.json
-        shell: bash
-
+          cat reports/sslCertificateDetails.json || true
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
